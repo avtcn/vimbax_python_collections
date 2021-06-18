@@ -109,7 +109,13 @@ def setup_camera(cam: Camera):
 def main():
     print_preamble()
     cam_id = parse_args()
+    
+    # ms for exposure times
+    expArray = [1, 10, 100, 500, 1000, 1500, 2000, 4000, 6000, 8000, 9900]
+    
+    timeout = 20*1000; # 20 seconds
 
+    i = 0
     with Vimba.get_instance():
         with get_camera(cam_id) as cam:
             setup_camera(cam)
@@ -118,15 +124,18 @@ def main():
             
 
             # Acquire 10 frame with a custom timeout (default is 2000ms) per frame acquisition.
-            for i in range(100):
+            for exp in expArray:
                 #for frame in cam.get_frame_generator(limit=1, timeout_ms=5000):
                 #    print('Got {}'.format(frame), flush=True)
                 
+                # Step index
+                i = i + 1
+                
                 feat = cam.get_feature_by_name('ExposureTime')
-                feat.set(5000.0 + i*5000)
+                feat.set(exp * 1000.000) # in us
                 time.sleep(1);
 
-                frame = cam.get_frame();
+                frame = cam.get_frame(timeout);
 
                 # Save as OpenCV image
                 # img = frame.as_opencv_image()
@@ -138,7 +147,7 @@ def main():
                 a = np.average(img)
             
                 # print('Got {}, exporsue:{:10.3f}us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
-                print('Got Frame {:5d}, exporsue:{:10.3f}us, average:{:8.2f}'.format(i, feat.get(), a), flush=True)
+                print('Got Frame {:5d}, exporsue:{:10.0f}us, average:{:8.2f}'.format(i, feat.get(), a), flush=True)
                 
                 
 
