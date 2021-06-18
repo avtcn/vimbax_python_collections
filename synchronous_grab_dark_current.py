@@ -111,7 +111,9 @@ def main():
     cam_id = parse_args()
     
     # ms for exposure times
-    expArray = [1, 10, 100, 500, 1000, 1500, 2000, 4000, 6000, 8000, 9900]
+    expArray = [1, 10, 20, 50, 80, 100, 200, 350, 500
+                , 700, 900, 1000, 1250, 1500, 1700, 1900
+                , 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 9900]
     
     timeout = 20*1000; # 20 seconds
 
@@ -119,8 +121,13 @@ def main():
     with Vimba.get_instance():
         with get_camera(cam_id) as cam:
             setup_camera(cam)
+            
+            # Set MONO12
             print("The Camera support following formats: {}".format(cam.get_pixel_formats()));
             cam.set_pixel_format(PixelFormat.Mono12)
+            
+            # Set FPNC disabled.
+            # ...
             
 
             # Acquire 10 frame with a custom timeout (default is 2000ms) per frame acquisition.
