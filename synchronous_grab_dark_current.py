@@ -123,7 +123,7 @@ def main():
                 #    print('Got {}'.format(frame), flush=True)
                 
                 feat = cam.get_feature_by_name('ExposureTime')
-                feat.set(5000.0 + i*3000)
+                feat.set(5000.0 + i*5000)
                 time.sleep(1);
 
                 frame = cam.get_frame();
@@ -137,7 +137,8 @@ def main():
                 img = frame.as_numpy_ndarray()
                 a = np.average(img)
             
-                print('Got {}, exporsue:{:10.3f}us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
+                # print('Got {}, exporsue:{:10.3f}us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
+                print('Got Frame {:5d}, exporsue:{:10.3f}us, average:{:8.2f}'.format(i, feat.get(), a), flush=True)
                 
                 
 
