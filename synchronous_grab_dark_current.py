@@ -118,7 +118,7 @@ def main():
             
 
             # Acquire 10 frame with a custom timeout (default is 2000ms) per frame acquisition.
-            for i in range(10):
+            for i in range(100):
                 #for frame in cam.get_frame_generator(limit=1, timeout_ms=5000):
                 #    print('Got {}'.format(frame), flush=True)
                 
@@ -137,7 +137,7 @@ def main():
                 img = frame.as_numpy_ndarray()
                 a = np.average(img)
             
-                print('Got {}, exporsue:{:10.3f} us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
+                print('Got {}, exporsue:{:10.3f}us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
                 
                 
 
