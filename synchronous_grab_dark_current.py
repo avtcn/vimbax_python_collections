@@ -137,7 +137,7 @@ def main():
                 img = frame.as_numpy_ndarray()
                 a = np.average(img)
             
-                print('Got {}, exporsue:{:.2f} us, average:{:.2f}'.format(frame, feat.get(), a), flush=True)
+                print('Got {}, exporsue:{:10.3f} us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
                 
                 
 
