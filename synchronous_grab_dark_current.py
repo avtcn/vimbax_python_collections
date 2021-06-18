@@ -113,7 +113,7 @@ def main():
     with Vimba.get_instance():
         with get_camera(cam_id) as cam:
             setup_camera(cam)
-            print(cam.get_pixel_formats())
+            print("The Camera support following formats: {}".format(cam.get_pixel_formats()));
             cam.set_pixel_format(PixelFormat.Mono12)
             
 
