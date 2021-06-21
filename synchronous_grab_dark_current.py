@@ -27,7 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
 2021-06-21 13:38
-Joe Created for Dark Current Calculation
+        Joe Created for Dark Current Calculation
 
 """
 import sys
@@ -119,10 +119,16 @@ def main():
     print_preamble()
     cam_id = parse_args()
     
+    fw = open("data.output.csv", 'w')    #将要输出保存的文件地址
+    fw.write('{:>5s},{:>10s},{:>8s},{:>8s}\n'.format("#", "exp", "temp", "mean"))
+
+
+    
     # microseconds for exposure time
     expArray = [1, 10, 20, 50, 75, 100, 125, 150, 175, 200, 
                 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1250,
                 1500, 1700, 1800, 1900, 2000, 
+                2050, 2100, 2300, 2400,
                 2500, 3000, 3500, 4000, 4500, 
                 5000, 5500, 6000, 6500, 7000, 
                 7500, 8000, 8500, 9000, 9500, 9900
@@ -130,10 +136,13 @@ def main():
     a = np.array(expArray)/1000
     print(a)
     
+    # Main part
     expSeconds = a.tolist();
     x = expSeconds[25:]          # in second
     print(x)
 
+    # left part
+    x1 = expSeconds[:25]
 
     #expArray =  [1,  100, 125, 400, 500, 600, 700, 1800, 1900, 2000]
                 
@@ -155,6 +164,8 @@ def main():
             corrName.set("FixedPatternNoiseCorrection");
             corrMode = cam.get_feature_by_name("CorrectionMode")
             corrMode.set("Off");
+            
+            tempCam = cam.get_feature_by_name("DeviceTemperature")
             
 
             # Acquire 10 frame with a custom timeout (default is 2000ms) per frame acquisition.
@@ -182,27 +193,41 @@ def main():
                 expAvgVal.append(a)
             
                 # print('Got {}, exporsue:{:10.3f}us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
-                print('Got Frame {:5d}, exporsue:{:10.0f}us, average:{:8.2f}'.format(i, feat.get(), a), flush=True)
-                
-                
+                print('Got Frame {:5d}, exporsue:{:10.0f}us, temp:{:6.3f}, average:{:8.2f}'.format(i, feat.get(), tempCam.get(), a), flush=True)
+                fw.write('{:5d},{:10.0f},{:8.3f},{:8.2f}\n'.format(i, feat.get(), tempCam.get(), a))
+               
+    fw.close()
+            
     plt.plot(expArray, expAvgVal) 
     plt.show()
     
     # Only higher part of data group to be used
-    startPlotIdx = 25
-
-
+    
+    # ------------------- Main part: 2nd part -------------------
     y = expAvgVal[25:]
     print("x", x)
     print("y", y)
     
+    y1 = expAvgVal[:25]
+     
+    print("right part:")
     coeff = polyfit(x, y, 1)
     print(coeff)
     
     f = poly1d(coeff)
     print(f)
-    p = plt.plot(x, y, 'rx')
+    p = plt.plot(x, y, 'gx')
     p = plt.plot(x, f(x))
+    
+    # ------------------- left part -------------------
+    print("left part:")
+    coeff1 = polyfit(x1, y1, 1)
+    print(coeff1)
+    
+    f1 = poly1d(coeff1)
+    print(f1)
+    p = plt.plot(x1, y1, 'rx')
+    p = plt.plot(x1, f(x1))
 
 
 if __name__ == '__main__':
