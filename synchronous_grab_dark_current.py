@@ -25,12 +25,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
+"""
+2021-06-21 13:38
+Joe Created for Dark Current Calculation
+
+"""
 import sys
 from typing import Optional
 from vimba import *
 import cv2
 import numpy as np 
 import time
+from matplotlib import pyplot as plt 
+from numpy import polyfit, poly1d
+
+
 
 
 def print_preamble():
@@ -110,11 +119,25 @@ def main():
     print_preamble()
     cam_id = parse_args()
     
-    # ms for exposure times
-    expArray = [1, 10, 20, 50, 80, 100, 200, 350, 500
-                , 700, 900, 1000, 1250, 1500, 1700, 1900
-                , 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 9900]
+    # microseconds for exposure time
+    expArray = [1, 10, 20, 50, 75, 100, 125, 150, 175, 200, 
+                300, 350, 400, 500, 600, 700, 800, 900, 1000, 1250,
+                1500, 1700, 1800, 1900, 2000, 
+                2500, 3000, 3500, 4000, 4500, 
+                5000, 5500, 6000, 6500, 7000, 
+                7500, 8000, 8500, 9000, 9500, 9900
+                ]
+    a = np.array(expArray)/1000
+    print(a)
     
+    expSeconds = a.tolist();
+    x = expSeconds[25:]          # in second
+    print(x)
+
+
+    #expArray =  [1,  100, 125, 400, 500, 600, 700, 1800, 1900, 2000]
+                
+    expAvgVal = []
     timeout = 20*1000; # 20 seconds
 
     i = 0
@@ -128,6 +151,10 @@ def main():
             
             # Set FPNC disabled.
             # ...
+            corrName = cam.get_feature_by_name("CorrectionSelector")
+            corrName.set("FixedPatternNoiseCorrection");
+            corrMode = cam.get_feature_by_name("CorrectionMode")
+            corrMode.set("Off");
             
 
             # Acquire 10 frame with a custom timeout (default is 2000ms) per frame acquisition.
@@ -152,11 +179,30 @@ def main():
                 # Save as MONO12 raw data
                 img = frame.as_numpy_ndarray()
                 a = np.average(img)
+                expAvgVal.append(a)
             
                 # print('Got {}, exporsue:{:10.3f}us, average:{:8.2f}'.format(frame, feat.get(), a), flush=True)
                 print('Got Frame {:5d}, exporsue:{:10.0f}us, average:{:8.2f}'.format(i, feat.get(), a), flush=True)
                 
                 
+    plt.plot(expArray, expAvgVal) 
+    plt.show()
+    
+    # Only higher part of data group to be used
+    startPlotIdx = 25
+
+
+    y = expAvgVal[25:]
+    print("x", x)
+    print("y", y)
+    
+    coeff = polyfit(x, y, 1)
+    print(coeff)
+    
+    f = poly1d(coeff)
+    print(f)
+    p = plt.plot(x, y, 'rx')
+    p = plt.plot(x, f(x))
 
 
 if __name__ == '__main__':
