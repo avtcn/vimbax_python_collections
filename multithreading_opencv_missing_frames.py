@@ -36,7 +36,9 @@ from typing import Optional
 from vimba import *
 
 
+
 FRAME_QUEUE_SIZE = 10
+# To use larger resolution or who image from the sensor, usbfs_mb should be increased to 1000MB or more
 FRAME_WIDTH  = 480*3
 FRAME_HEIGHT = 480*3
 
@@ -181,7 +183,7 @@ class FrameProducer(threading.Thread):
         # set_nearest_value(self.cam, 'Height', FRAME_HEIGHT)
         # set_nearest_value(self.cam, 'Width',  FRAME_WIDTH)
 
-        set_fixed_fps(self.cam, 5.0)
+        set_fixed_fps(self.cam, 10.0)
 
         # Try to enable automatic exposure time setting
         try:
