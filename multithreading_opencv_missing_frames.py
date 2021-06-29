@@ -30,14 +30,15 @@ import cv2
 import threading
 import queue
 import numpy
+import sys
 
 from typing import Optional
 from vimba import *
 
 
 FRAME_QUEUE_SIZE = 10
-FRAME_HEIGHT = 480
-FRAME_WIDTH = 480
+FRAME_WIDTH  = 480*3
+FRAME_HEIGHT = 480*3
 
 
 def print_preamble():
@@ -70,11 +71,13 @@ def resize_if_required(frame: Frame) -> numpy.ndarray:
 
 
 def create_dummy_frame() -> numpy.ndarray:
-    cv_frame = numpy.zeros((50, 640, 1), numpy.uint8)
+    cv_frame = numpy.zeros((128, 640, 1), numpy.uint8)
     cv_frame[:] = 0
 
-    cv2.putText(cv_frame, 'No Stream available. Please connect a Camera.', org=(30, 30),
+    cv2.putText(cv_frame, 'No Stream available. Please connect Cameras.', org=(30, 30),
                 fontScale=1, color=255, thickness=1, fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL)
+    cv2.putText(cv_frame, 'Press RETURN key to Exit.', org=(30, 80),
+                fontScale=1, color=180, thickness=2, fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL)
 
     return cv_frame
 
@@ -85,6 +88,25 @@ def try_put_frame(q: queue.Queue, cam: Camera, frame: Optional[Frame]):
 
     except queue.Full:
         pass
+
+def set_fixed_fps(cam: Camera, feat_value: float):
+    # Helper function that tries to set a given value. If setting of the initial value failed
+    # it calculates the nearest valid value and sets the result. This function is intended to
+    # be used with Height and Width Features because not all Cameras allow the same values
+    # for height and width.
+    feat = cam.get_feature_by_name("AcquisitionFrameRateEnable")
+    featfps = cam.get_feature_by_name("AcquisitionFrameRate")
+
+    try:
+        feat.set(True)
+        featfps.set(feat_value)
+
+    except VimbaFeatureError:
+        msg = ('Camera {}: Failed to set value of Feature \'{}\' to \'{}\': ')
+        Log.get_instance().info(msg.format(cam.get_id(), "fixed_fps", feat_value))
+
+    msg = ('Camera {}: Success to set value of Feature \'{}\' to \'{}\': ')
+    Log.get_instance().info(msg.format(cam.get_id(), "fixed_fps", feat_value))
 
 
 def set_nearest_value(cam: Camera, feat_name: str, feat_value: int):
@@ -118,6 +140,7 @@ def set_nearest_value(cam: Camera, feat_name: str, feat_value: int):
         Log.get_instance().info(msg.format(cam.get_id(), feat_name, feat_value, val))
 
 
+
 # Thread Objects
 class FrameProducer(threading.Thread):
     def __init__(self, cam: Camera, frame_queue: queue.Queue):
@@ -134,13 +157,20 @@ class FrameProducer(threading.Thread):
         # frame must be copied and the copy must be sent, otherwise the acquired
         # frame will be overridden as soon as the frame is reused.
         if frame.get_status() == FrameStatus.Complete:
+            # self.log.info("Incoming Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
+            print("Incoming Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
+            if(frame.get_id() < 3):
+                print("Incoming Cam {} with FrmID {}, width = {}, height = {}".format(cam.get_id(), frame.get_id(), frame.get_width(), frame.get_height()))
 
-            if not self.frame_queue.full():
-                frame_cpy = copy.deepcopy(frame)
-                try_put_frame(self.frame_queue, cam, frame_cpy)
-                print("Incoming Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()), flush=True)
+
+            # Joe: disable frames showing, only records frame ids
+            # if not self.frame_queue.full():
+            #     frame_cpy = copy.deepcopy(frame)
+            #     try_put_frame(self.frame_queue, cam, frame_cpy)
+
         else:
-            print("Missing Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()), flush=True)
+            self.log.error("Missing Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
+            print("Missing Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
 
         cam.queue_frame(frame)
 
@@ -148,11 +178,14 @@ class FrameProducer(threading.Thread):
         self.killswitch.set()
 
     def setup_camera(self):
-        set_nearest_value(self.cam, 'Height', FRAME_HEIGHT)
-        set_nearest_value(self.cam, 'Width', FRAME_WIDTH)
+        # set_nearest_value(self.cam, 'Height', FRAME_HEIGHT)
+        # set_nearest_value(self.cam, 'Width',  FRAME_WIDTH)
+
+        set_fixed_fps(self.cam, 5.0)
 
         # Try to enable automatic exposure time setting
         try:
+            # self.cam.ExposureAuto.set('Once')
             self.cam.ExposureAuto.set('Once')
 
         except (AttributeError, VimbaFeatureError):
@@ -160,6 +193,7 @@ class FrameProducer(threading.Thread):
                           self.cam.get_id()))
 
         self.cam.set_pixel_format(PixelFormat.Mono8)
+        
 
     def run(self):
         self.log.info('Thread \'FrameProducer({})\' started.'.format(self.cam.get_id()))
@@ -263,7 +297,7 @@ class MainThread(threading.Thread):
         consumer = FrameConsumer(self.frame_queue)
 
         vimba = Vimba.get_instance()
-        vimba.enable_log(LOG_CONFIG_INFO_CONSOLE_ONLY)
+        # vimba.enable_log(LOG_CONFIG_INFO_CONSOLE_ONLY)
 
         log.info('Thread \'MainThread\' started.')
 
@@ -298,8 +332,14 @@ class MainThread(threading.Thread):
         
 
 
+
 if __name__ == '__main__':
+
+    sys.stdout = open('app.log', 'w')
+
     print_preamble()
     main = MainThread()
     main.start()
     main.join()
+
+    # sys.stdout.close()
