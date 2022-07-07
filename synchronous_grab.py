@@ -99,6 +99,14 @@ def setup_camera(cam: Camera):
         except (AttributeError, VimbaFeatureError):
             pass
 
+        # Try read and write some feature
+        feat_rw = cam.get_feature_by_name('Gain')
+        # Read/Write Feature
+        old_value = feat_rw.get()
+        feat_rw.set(old_value+1.0)
+        new_value = feat_rw.get()
+        print("Increase Gain from {} to {}".format(old_value, new_value), flush=True)         
+
 
 def main():
     print_preamble()
