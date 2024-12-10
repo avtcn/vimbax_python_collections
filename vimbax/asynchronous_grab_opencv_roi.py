@@ -98,20 +98,44 @@ def get_camera(camera_id: Optional[str]) -> Camera:
 def setup_camera(cam: Camera):
     with cam:
 
-        # Enable auto exposure time setting if camera supports it
-        # try:
-        #     cam.ExposureAuto.set('Continuous')
-        # except (AttributeError, VmbFeatureError):
-        #     pass
+        # Disable auto exposure time setting if camera supports it
         try:
+            cam.ExposureAuto.set('Off')
+        except (AttributeError, VmbFeatureError):
+            print("ERROR1:", VmbFeatureError)
+            pass
+
+        # Set ExposureTime, ROI, etc,.
+        try:
+            # feature_exp = cam.get_feature_by_name('ExposureTime')
             feature_exp = cam.get_feature_by_name('ExposureTime')
             exp_old = feature_exp.get()
             print("origin exposure time:", exp_old)
-            feature_exp.set(12345.0) # 12.345ms
+            feature_exp.set(12345) # 12.345ms
             exp_new = feature_exp.get()
             print("new exposure time:", exp_new)
 
+
+            width = cam.get_feature_by_name('Width')
+            height = cam.get_feature_by_name('Height')
+            width.set(60)
+            height.set(50)
+            print("new width:", width.get(), "new height:", height.get())
+
+            offsetx = cam.get_feature_by_name('OffsetX')
+            offsety = cam.get_feature_by_name('OffsetY')
+            offsetx.set(40)
+            offsety.set(40)
+            print("new offsetx:", offsetx.get(), "new offsety:", offsety.get())
+
+            # set fps for Stingray F125
+            fps = cam.get_feature_by_name('AcquisitionFrameRate')
+            fps.set(11.0) 
+
+
+
         except (AttributeError, VmbFeatureError):
+            print("ERROR2:", VmbFeatureError)
             pass
 
         # Enable white balancing if camera supports it
@@ -128,6 +152,7 @@ def setup_camera(cam: Camera):
                 pass
 
         except (AttributeError, VmbFeatureError):
+            # print("ERROR3:", VmbFeatureError)
             pass
 
 
