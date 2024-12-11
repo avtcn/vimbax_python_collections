@@ -28,6 +28,9 @@ import sys
 from typing import Optional
 from queue import Queue
 
+import numpy as np
+
+
 from vmbpy import *
 
 
@@ -111,21 +114,21 @@ def setup_camera(cam: Camera):
             feature_exp = cam.get_feature_by_name('ExposureTime')
             exp_old = feature_exp.get()
             print("origin exposure time:", exp_old)
-            feature_exp.set(12345) # 12.345ms
+            feature_exp.set(80123) # 12.345ms
             exp_new = feature_exp.get()
             print("new exposure time:", exp_new)
 
 
             width = cam.get_feature_by_name('Width')
             height = cam.get_feature_by_name('Height')
-            width.set(60)
-            height.set(50)
+            width.set(64)
+            height.set(64)
             print("new width:", width.get(), "new height:", height.get())
 
             offsetx = cam.get_feature_by_name('OffsetX')
             offsety = cam.get_feature_by_name('OffsetY')
-            offsetx.set(40)
-            offsety.set(40)
+            offsetx.set(600)
+            offsety.set(500)
             print("new offsetx:", offsetx.get(), "new offsety:", offsety.get())
 
             # set fps for Stingray F125
@@ -170,14 +173,22 @@ def setup_pixel_format(cam: Camera):
     # if OpenCV compatible color format is supported directly, use that
     if opencv_display_format in cam_formats:
         cam.set_pixel_format(opencv_display_format)
+        print("set pixel format #1:", opencv_display_format)
 
     # else if existing color format can be converted to OpenCV format do that
     elif convertible_color_formats:
         cam.set_pixel_format(convertible_color_formats[0])
+        print("set pixel format #2:", convertible_color_formats[0])
 
     # fall back to a mono format that can be converted
     elif convertible_mono_formats:
-        cam.set_pixel_format(convertible_mono_formats[0])
+        # cam.set_pixel_format(convertible_mono_formats[0])
+        cam.set_pixel_format(convertible_mono_formats[2])
+        print("set pixel format #3:", convertible_mono_formats[0])
+        print("set pixel format #3:", convertible_mono_formats[1])
+        print("set pixel format #3:", convertible_mono_formats[2])
+        print("set pixel format #3:", convertible_mono_formats)
+        print("set pixel format #3: current value:", cam.get_pixel_format())
 
     else:
         abort('Camera does not support an OpenCV compatible format. Abort.')
@@ -195,12 +206,15 @@ class Handler:
             print('{} acquired {}'.format(cam, frame), flush=True)
 
             # Convert frame if it is not already the correct format
-            if frame.get_pixel_format() == opencv_display_format:
-                display = frame
-            else:
-                # This creates a copy of the frame. The original `frame` object can be requeued
-                # safely while `display` is used
-                display = frame.convert_pixel_format(opencv_display_format)
+            # if frame.get_pixel_format() == opencv_display_format:
+            #     display = frame
+            # else:
+            #     # This creates a copy of the frame. The original `frame` object can be requeued
+            #     # safely while `display` is used
+            #     display = frame.convert_pixel_format(opencv_display_format)
+
+            # keep original vimbax frame 
+            display = frame
             
             # self.display_queue.put(display.as_opencv_image(), True)
             self.display_queue.put(display, True)
@@ -232,10 +246,24 @@ def main():
                         cv2.destroyWindow(msg.format(cam.get_name()))
                         break
 
-                    display = handler.get_image()
-                    img_opencv = display.as_opencv_image()
-                    img_numpy = display.as_numpy_ndarray()
-                    print("image as array:", img_numpy.shape, img_numpy.dtype)
+                    frame = handler.get_image()
+
+                    if frame.get_pixel_format() == opencv_display_format:
+                        display = frame
+                    else:
+                        # This creates a copy of the frame. The original `frame` object can be requeued
+                        # safely while `display` is used
+                        display = frame.convert_pixel_format(opencv_display_format)
+
+                    img_opencv = frame.as_opencv_image()
+                    img_numpy = frame.as_numpy_ndarray()
+
+                    print("image   as array:", img_numpy.shape, img_numpy.dtype)
+
+                    mean_value = np.mean(img_numpy)
+                    total_sum = np.sum(img_numpy)
+                    print("image frame info:", frame.get_buffer_size(), ", mean:",  mean_value ,", sum:", total_sum)
+                    # print(img_numpy)
 
                     cv2.imshow(msg.format(cam.get_name()), img_opencv)
 
