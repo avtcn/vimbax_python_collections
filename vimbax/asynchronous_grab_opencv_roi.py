@@ -114,7 +114,7 @@ def setup_camera(cam: Camera):
             feature_exp = cam.get_feature_by_name('ExposureTime')
             exp_old = feature_exp.get()
             print("origin exposure time:", exp_old)
-            feature_exp.set(80123) # 12.345ms
+            feature_exp.set(5123) # 12.345ms
             exp_new = feature_exp.get()
             print("new exposure time:", exp_new)
 
@@ -226,6 +226,12 @@ def main():
     print_preamble()
     cam_id = parse_args()
 
+    # Specify the file name
+    file_name = "output.txt"
+
+    # Open the file in write mode
+    file = open(file_name, "w")
+
     with VmbSystem.get_instance():
         with get_camera(cam_id) as cam:
             # setup general camera settings and the pixel format in which frames are recorded
@@ -265,9 +271,15 @@ def main():
                     print("image frame info:", frame.get_buffer_size(), ", mean:",  mean_value ,", sum:", total_sum)
                     # print(img_numpy)
 
+                    # Write the text to the file
+                    file.write(f"{mean_value},{total_sum}\n")
+
+
+
                     cv2.imshow(msg.format(cam.get_name()), img_opencv)
 
             finally:
+                file.close()
                 cam.stop_streaming()
 
 
