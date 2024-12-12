@@ -114,7 +114,7 @@ def setup_camera(cam: Camera):
             feature_exp = cam.get_feature_by_name('ExposureTime')
             exp_old = feature_exp.get()
             print("origin exposure time:", exp_old)
-            feature_exp.set(5123) # 12.345ms
+            feature_exp.set(640) # 12.345ms
             exp_new = feature_exp.get()
             print("new exposure time:", exp_new)
 
