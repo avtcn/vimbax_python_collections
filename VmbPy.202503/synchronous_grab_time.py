@@ -124,7 +124,7 @@ def main():
                 # Acquire 10 frame with a custom timeout (default is 2000ms) per frame acquisition.
                 for frame in cam.get_frame_generator(limit=1, timeout_ms=3000):
                     #print('Got {}'.format(frame), flush=True)
-                    print('.');
+                    print('.')
                 end_time = time.time()
                 execution_time = end_time - start_time
                 print(f"Execution Time: {execution_time:.6f} seconds, with exposure time: {exp_old: .6f} us")
