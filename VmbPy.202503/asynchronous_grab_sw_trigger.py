@@ -142,10 +142,14 @@ def main():
                                     allocation_mode=allocation_mode)
 
                 while True:
-                    user_input = input("Enter 's' to make software trigger or anything else to quit: ")
+                    user_input = input("Press ENTER key to make software trigger or q to quit: ")
 
-                    if user_input.lower() == 's':
-                        print("You entered 's', emit software trigger signal ...")
+                    if user_input.lower() == 'q':
+                        print("Exiting loop.")
+                        break # quit while loop and stop acquisiton consequently
+
+                    else:
+                        print("Emitting software trigger signal ...")
 
                         # Send software trigger signal to camera
                         try:
@@ -155,9 +159,6 @@ def main():
                         except (AttributeError, VmbFeatureError):
                             print (VmbFeatureError)
                             pass
-                    else:
-                        print("Exiting loop.")
-                        break
 
 
             finally:
