@@ -27,6 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
 Implement software trigger 
+By Joe 2025 Apr 3rd
 """
 
 
@@ -37,9 +38,11 @@ from vmbpy import *
 
 
 def print_preamble():
-    print('///////////////////////////////////////')
-    print('/// VmbPy Asynchronous Grab Example ///')
-    print('///////////////////////////////////////\n')
+    print('//////////////////////////////////////////////')
+    print('/// VmbPy Asynchronous Grab Example        ///')
+    print('/// Implement software trigger             ///')
+    print('/// Based on example: asynchronous_grab.py ///')
+    print('//////////////////////////////////////////////\n')
 
 
 def print_usage():
