@@ -32,6 +32,11 @@ import cv2
 
 import numpy as np
 
+import tifffile
+import imageio.v3 as iio
+
+
+
 from vmbpy import *
 
 # All frames will either be recorded in this format, or transformed to it before being displayed
@@ -180,7 +185,15 @@ class Handler:
                 pixel_value1 = bayer_image_16bit[0, 0]
                 pixel_value2 = bayer_image_16bit[100, 100]
                 pixel_value3 = bayer_image_16bit[200, 200]
-                print('BayerRG12 raw data {}, {}, {}'.format(pixel_value1, pixel_value2, pixel_value3), flush=True)
+                print('BayerRG12 raw data origin: {}, {}, {}'.format(pixel_value1, pixel_value2, pixel_value3), flush=True)
+
+                # 由于是 BayerRG12，可能高 12 位有效，需右移 4 位转换为 8/12bit 可视图
+                # 如果你想保存 16bit RGB，可以保留原精度
+                bayer_image_16bit = (bayer_image_16bit << 4).astype(np.uint16)  # 或保持 np.uint16 看需求
+                pixel_value1 = bayer_image_16bit[0, 0]
+                pixel_value2 = bayer_image_16bit[100, 100]
+                pixel_value3 = bayer_image_16bit[200, 200]
+                print('BayerRG12 raw data tiff  : {}, {}, {}'.format(pixel_value1, pixel_value2, pixel_value3), flush=True)
 
                 # 3. 去马赛克 (Demosaicing)
                 # 对于BayerRG12，对应的OpenCV去马赛克模式是 COLOR_BayerBG2RGB
@@ -189,11 +202,20 @@ class Handler:
                 # 但对于工业相机，BayerRG12的"RG"通常指的是第一行第一个像素是R，
                 # 第二个是G，然后第二行第一个是G，第二个是B。
                 # 实际使用中，你需要根据你的相机文档或实际测试来确定正确的Bayer模式。
-                rgb_image = cv2.cvtColor(bayer_image_16bit, cv2.COLOR_BAYER_GR2RGB_EA )
+                rgb_image = cv2.cvtColor(bayer_image_16bit, cv2.COLOR_BAYER_RG2RGB_EA )
+
+                #TODO: saved tiff seems very black, Use Ctrl+I inverse and see something ...
 
                 output_tiff_path = "output_" + str(frame.get_id()) + ".tiff"
-                # 直接保存16位RGB图像为TIFF
+
+                # 直接保存16位RGB图像为TIFF, compressed
                 cv2.imwrite(output_tiff_path, rgb_image) 
+
+                # Save as TIFF without compression
+                #tifffile.imwrite(output_tiff_path, rgb_image, compression=None)
+                # Save as 16-bit TIFF with no compression
+                #iio.imwrite(output_tiff_path, rgb_image, extension=".tiff", compression="none")
+
                 print(f"成功将BayerRG12数据转换为RGB TIFF并保存到: {output_tiff_path}")
 
 
