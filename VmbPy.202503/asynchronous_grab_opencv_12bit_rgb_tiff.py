@@ -41,7 +41,7 @@ from vmbpy import *
 
 # All frames will either be recorded in this format, or transformed to it before being displayed
 opencv_display_format = PixelFormat.Bgr8
-opencv_display_format = PixelFormat.Bgr8
+save_tiff_format = PixelFormat.BayerRG12
 
 
 def print_preamble():
@@ -187,9 +187,10 @@ class Handler:
                 pixel_value3 = bayer_image_16bit[200, 200]
                 print('BayerRG12 raw data origin: {}, {}, {}'.format(pixel_value1, pixel_value2, pixel_value3), flush=True)
 
-                # 由于是 BayerRG12，可能高 12 位有效，需右移 4 位转换为 8/12bit 可视图
-                # 如果你想保存 16bit RGB，可以保留原精度
+                #DONE: saved tiff seems very black, Use Ctrl+I inverse and see something ...
+                # Tiff format is very strange, lower 4 bits must be zeros for 12-bit images
                 bayer_image_16bit = (bayer_image_16bit << 4).astype(np.uint16)  # 或保持 np.uint16 看需求
+
                 pixel_value1 = bayer_image_16bit[0, 0]
                 pixel_value2 = bayer_image_16bit[100, 100]
                 pixel_value3 = bayer_image_16bit[200, 200]
@@ -204,13 +205,13 @@ class Handler:
                 # 实际使用中，你需要根据你的相机文档或实际测试来确定正确的Bayer模式。
                 rgb_image = cv2.cvtColor(bayer_image_16bit, cv2.COLOR_BAYER_RG2RGB_EA )
 
-                #TODO: saved tiff seems very black, Use Ctrl+I inverse and see something ...
 
                 output_tiff_path = "output_" + str(frame.get_id()) + ".tiff"
 
                 # 直接保存16位RGB图像为TIFF, compressed
                 cv2.imwrite(output_tiff_path, rgb_image) 
 
+                #TODO: tiffile / imageio.v3 not work well ！！！
                 # Save as TIFF without compression
                 #tifffile.imwrite(output_tiff_path, rgb_image, compression=None)
                 # Save as 16-bit TIFF with no compression
@@ -238,6 +239,9 @@ def main():
             setup_camera(cam)
             # Keep camera's origin BayerRG12 format
             #setup_pixel_format(cam)
+            # set BayerRG12 format for color camera
+            cam.set_pixel_format(save_tiff_format)
+
             handler = Handler()
 
             try:
