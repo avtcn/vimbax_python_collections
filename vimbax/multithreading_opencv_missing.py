@@ -38,6 +38,11 @@ FRAME_QUEUE_SIZE = 10
 FRAME_HEIGHT = 480
 FRAME_WIDTH = 480
 
+"""BSD 2-Clause License
+TODO:
+why shr461 not works
+
+"""
 
 def print_preamble():
     print('////////////////////////////////////////////////////')
@@ -70,7 +75,7 @@ def resize_if_required(frame: Frame) -> numpy.ndarray:
 
 
 def create_dummy_frame() -> numpy.ndarray:
-    cv_frame = numpy.zeros((50, 640, 1), numpy.uint8)
+    cv_frame = numpy.zeros((150, 640, 1), numpy.uint8)
     cv_frame[:] = 0
 
     cv2.putText(cv_frame, 'No Stream available. Please connect a Camera.', org=(30, 30),
@@ -167,7 +172,7 @@ class FrameProducer(threading.Thread):
             #     try_put_frame(self.frame_queue, cam, frame_cpy)
 
         else:
-            self.log.error("Missing Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
+            self.log.error("Missing/Incomplete frame got from Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
             print("Missing Cam {} with FrmID {}".format(cam.get_id(), frame.get_id()))
             print(flush=True)
 
@@ -180,7 +185,7 @@ class FrameProducer(threading.Thread):
         # set_nearest_value(self.cam, 'Height', FRAME_HEIGHT)
         # set_nearest_value(self.cam, 'Width',  FRAME_WIDTH)
 
-        set_fixed_fps(self.cam, 10)
+        # set_fixed_fps(self.cam, 5)
 
         # Try to enable automatic exposure time setting
         # try:
@@ -298,9 +303,12 @@ class Application:
             # Construct FrameProducer threads for all detected cameras
             # Model: 1800 U-1240c S/N: 006X8 ID: DEV_1AB22C00230C
             # Model: 1800 U-500m S/N: A2114 ID: DEV_1AB22D01BBB8
+            # Model: shr461MXGE S/N: 108819 ID: DEV_AC4FFC017538
             for cam in vmb.get_all_cameras():
+                # if(cam.get_id() in ["DEV_1AB22C00230C", "DEV_AC4FFC017538"]):
                 if(cam.get_id() in ["DEV_1AB22C00230C", "DEV_1AB22D01BBB8"]):
-                    log.info("Fount camera:" + cam.get_id() + ", opened it...");
+                # if(cam.get_id() in ["DEV_AC4FFC017538"]):
+                    log.info("Found camera:" + cam.get_id() + ", opened it...");
                     self.producers[cam.get_id()] = FrameProducer(cam, self.frame_queue)
 
             # Start FrameProducer threads
@@ -309,9 +317,9 @@ class Application:
                     producer.start()
 
             # Run the frame consumer to display the recorded images
-            vmb.register_camera_change_handler(self)
+            # vmb.register_camera_change_handler(self)
             consumer.run()
-            vmb.unregister_camera_change_handler(self)
+            # vmb.unregister_camera_change_handler(self)
 
             # Stop all FrameProducer threads
             with self.producers_lock:
