@@ -31,9 +31,11 @@ from vmbpy import *
 
 
 def print_preamble():
-    print('///////////////////////////////////////')
+    print('/////////////////////////////////////////////')
     print('/// VmbPy Asynchronous Grab Example ///')
-    print('///////////////////////////////////////\n')
+    print('/// VmbPy 1.2.1 Hardware Trigger ///')
+    print('/// Line0/Line1 works ///')
+    print('/////////////////////////////////////////////\n')
 
 
 def print_usage():
@@ -117,17 +119,17 @@ def setup_camera(cam: Camera):
         cam.TriggerSelector.set('FrameStart')
         cam.TriggerMode.set('Off')
 
-        # Configure Line2 as input and source.
-        cam.LineSelector.set('Line2')
+        # Configure Line1 as input and source.
+        cam.LineSelector.set('Line1')
         if 'Input' in cam.LineMode.get_available_entries():
             cam.LineMode.set('Input')
         try:
-            cam.LineSource.set('Line2')
+            cam.LineSource.set('Line1')
         except (AttributeError, VmbFeatureError):
             pass
 
-        # Set Line2 as the trigger source (and optional activation edge).
-        cam.TriggerSource.set('Line2')
+        # Set Line1 as the trigger source (and optional activation edge).
+        cam.TriggerSource.set('Line1')
         try:
             cam.TriggerActivation.set('RisingEdge')
         except (AttributeError, VmbFeatureError):
