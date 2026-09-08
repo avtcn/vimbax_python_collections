@@ -98,6 +98,25 @@ def get_camera(camera_id: Optional[str]) -> Camera:
 
 def setup_camera(cam: Camera):
     with cam:
+        # Camera parameters set right after opening, before streaming starts.
+        try:
+            cam.ExposureAuto.set('Off')
+        except (AttributeError, VmbFeatureError):
+            pass
+        cam.ExposureTime.set(4567.0)
+
+        try:
+            cam.GainAuto.set('Off')
+        except (AttributeError, VmbFeatureError):
+            pass
+        cam.Gain.set(1.2345)
+
+        # USB bandwidth limit in bytes/s (feature confirmed available on this camera).
+        try:
+            cam.DeviceLinkThroughputLimit.set(312 * 1000 * 1000)
+        except (AttributeError, VmbFeatureError):
+            pass
+
         # Try to adjust GeV packet size. This Feature is only available for GigE - Cameras.
         try:
             stream = cam.get_streams()[0]
